@@ -1,0 +1,15 @@
+# docker-compose.yml
+version: '3'
+
+services:
+
+  php:
+    build: ./php
+    depends_on:
+      - redis
+    volumes:
+      - ../src/:/app
+
+  redis:
+    image: redis
+    command: [ "sh", "-c", "exec redis-server" ]
