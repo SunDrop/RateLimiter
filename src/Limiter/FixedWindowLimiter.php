@@ -5,7 +5,6 @@ namespace Limiter;
 use DateInterval;
 use DateTimeImmutable;
 use InvalidArgumentException;
-use LogicException;
 use Storage\StorageInterface;
 use Window\Window;
 use Window\WindowInterface;
@@ -52,7 +51,7 @@ class FixedWindowLimiter
 
         $availableTokens = $window->getAvailableTokens();
         if ($availableTokens <= 0) {
-            throw new LogicException('Your request was rejected');
+            throw new LimiterException('Your request was rejected');
         }
         $window->addHit();
         $this->storage->save($window);
