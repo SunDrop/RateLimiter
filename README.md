@@ -36,6 +36,44 @@ try {
     // ... do some logic ...
 } catch (LimiterException $e) {
     http_response_code(429);
-    header('HTTP/1.0 429 Too Many Requests');
+    header('HTTP/1.1 429 Too Many Requests');
+    exit '<!doctype html><html><body><h1>429 Too Many Requests</h1><p>You seem to be doing a lot of requests. You\'re now cooling down.</p></body></html>';
+}
+```
+
+## LeakyBucketLimiter
+
+### Теория
+Leaky Bucket — это алгоритм, который обеспечивает наиболее простой, интуитивно понятный подход к ограничению скорости обработки при помощи очереди, которую можно представить в виде «ведра», содержащего запросы. Когда запрос получен, он добавляется в конец очереди. Через равные промежутки времени первый элемент в очереди обрабатывается. Это также известно как очередь FIFO. Если очередь заполнена, то дополнительные запросы отбрасываются (или “утекают”).
+
+Преимущество данного алгоритма состоит в том, что он сглаживает всплески и обрабатывает запросы примерно с одной скоростью, его легко внедрить на одном сервере или балансировщике нагрузки, он эффективен по использованию памяти, так как размер очереди для каждого пользователя ограничен.
+
+Однако при резком увеличении трафика очередь может заполниться старыми запросами и лишить систему возможности обрабатывать более свежие запросы. Также он не дает гарантии, что запросы будут обработаны за какое-то фиксированное время. Кроме того, если для обеспечения отказоустойчивости или увеличения пропускной способности вы загружаете балансировщики, то вы должны реализовать политику координации и обеспечения глобального ограничения между ними.
+
+![Leaky Bucket Limiter](https://raw.github.com/SunDrop/RateLimiter/master/doc/leaky-bucket.gif)
+
+### Пример использования
+
+```php
+use Limiter\LeakyBucketLimiter;
+use Limiter\LimiterException;
+use Storage\MemoryStorage;
+
+try {
+    $bucket = new LeakyBucketLimiter(
+        'login', // ID
+         3, // Capacity (Limit)
+         1 // leak
+    );
+    $bucket->fill();
+    // Check if it's full
+    if ($bucket->isFull()) {
+        throw new LimiterException();
+    }
+    // ... do some logic ...
+} catch (LimiterException $e) {
+    http_response_code(429);
+    header('HTTP/1.1 429 Too Many Requests');
+    exit '<!doctype html><html><body><h1>429 Too Many Requests</h1><p>You seem to be doing a lot of requests. You\'re now cooling down.</p></body></html>';
 }
 ```
